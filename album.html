@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virtual Photo Album</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Playfair+Display:ital,wght@0,400;1,600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Playfair+Display:ital,wght@0,400;1,600&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background-color: #f0eadd; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'Playfair Display', serif; }
+  .album-music { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
+  .album-scene { perspective: 1500px; width: 900px; height: 600px; position: relative; display: flex; }
+  .page-right { position: absolute; right: 0; width: 50%; height: 100%; background-color: #fdfbf7; box-shadow: inset 5px 0 15px rgba(0,0,0,0.1), 10px 10px 20px rgba(0,0,0,0.2); display: flex; flex-direction: column; padding: 15px 25px; border-radius: 0 8px 8px 0; z-index: 1; border-left: 2px solid #e3dec9; }
+  .leaf { position: absolute; right: 0; width: 50%; height: 100%; transform-origin: left center; transform-style: preserve-3d; transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1); cursor: pointer; }
+  #leaf1 { z-index: 8; } #leaf2 { z-index: 7; } #leaf3 { z-index: 6; } #leaf4 { z-index: 5; } #leaf5 { z-index: 4; } #leaf6 { z-index: 3; } #leaf7 { z-index: 2; }
+  .leaf.flipped { transform: rotateY(-180deg); }
+  .face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 0 8px 8px 0; }
+  .face.front { background-color: #fdfbf7; display: flex; flex-direction: column; padding: 15px 25px; box-shadow: inset 5px 0 15px rgba(0,0,0,0.1); border-left: 2px solid #e3dec9; }
+  .face.front.cover { background-color: #D96C7A; align-items: center; justify-content: center; padding: 0; box-shadow: inset 5px 0 15px rgba(0,0,0,0.3), 5px 5px 15px rgba(0,0,0,0.4); background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.02) 75%, rgba(255,255,255,0.02)), repeating-linear-gradient(-45deg, rgba(255,255,255,0.02) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.02) 75%, rgba(255,255,255,0.02)); background-size: 4px 4px; border-left: none; }
+  .spiral-binding { position: absolute; left: -15px; top: 2%; height: 96%; width: 30px; background: repeating-linear-gradient(to bottom, transparent, transparent 15px, #b8860b 15px, #8b6508 20px, transparent 20px, transparent 30px); z-index: 10; }
+  .corner { position: absolute; width: 40px; height: 40px; border: 3px solid #d4af37; }
+  .corner-top-right { top: 10px; right: 10px; border-bottom: none; border-left: none; }
+  .corner-bottom-right { bottom: 10px; right: 10px; border-top: none; border-left: none; }
+  .cover-photo-slot { width: 75%; aspect-ratio: 4/3; background: #000; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); overflow: hidden; display: flex; justify-content: center; align-items: center; background-color: #fff; }
+  .cover-photo-slot img { width: 100%; height: 100%; object-fit: contain; cursor: pointer; }
+  .cover-title { color: #ffffff; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); font-size: 22px; letter-spacing: 8px; text-transform: uppercase; text-align: center; }
+  .cover-date-input { background: transparent; border: none; color: #ffffff; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); font-family: 'Playfair Display', serif; font-size: 16px; letter-spacing: 4px; text-align: center; margin-top: 15px; outline: none; width: 70%; }
+  .face.back { background-color: #fdfbf7; transform: rotateY(180deg); box-shadow: inset -5px 0 15px rgba(0,0,0,0.1); border-radius: 8px 0 0 8px; display: flex; flex-direction: column; padding: 15px 25px; border-left: none; }
+  .travel-tag { position: absolute; top: 15px; right: 25px; font-family: 'Caveat', cursive; font-size: 28px; color: #8B3A3A; font-weight: bold; z-index: 5; pointer-events: none; }
+  .face.back .travel-tag { left: 25px; right: auto; }
+  .layout-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 10px; width: 100%; height: 100%; margin-top: 25px; }
+  .top-section { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; }
+  .bottom-section { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; }
+  .photo-frame { background: #fff; padding: 8px 8px 22px 8px; box-shadow: 2px 4px 10px rgba(0,0,0,0.15); width: 48%; transform: rotate(-2deg); transition: transform 0.3s; }
+  .photo-frame:nth-child(even) { transform: rotate(2deg); }
+  .photo-frame:hover { transform: rotate(0deg) scale(1.05); z-index: 10; }
+  .photo-frame img { width: 100%; aspect-ratio: 1/1; object-fit: cover; background: #e0e0e0; cursor: pointer; }
+  .text-block { width: 48%; display: flex; flex-direction: column; justify-content: center; padding: 5px; }
+  .page-title { font-family: 'Caveat', cursive; font-size: 26px; color: #333; border: none; background: transparent; outline: none; margin-bottom: 4px; text-align: center; }
+  .scrapbook-text { font-family: 'Dancing Script', cursive; font-size: 16px; color: #555; background: transparent; border: none; resize: none; width: 100%; height: 110px; outline: none; line-height: 1.25; text-align: center; overflow: hidden; }
+  .photo-frame, .text-block, .cover-date-input, .cover-title { cursor: default; }
+  .photo-frame img, .cover-photo-slot img { cursor: pointer; }
+  .modal { visibility: hidden; opacity: 0; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); display: flex; justify-content: center; align-items: center; transition: opacity 0.3s ease, visibility 0.3s ease; }
+  .modal.active { visibility: visible; opacity: 1; }
+  .modal-content { max-width: 85%; max-height: 85%; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); border: 8px solid #fff; border-radius: 4px; transform: scale(0.8); transition: transform 0.3s ease; object-fit: contain; }
+  .modal.active .modal-content { transform: scale(1); }
+  .close-btn { position: absolute; top: 20px; right: 40px; color: #fff; font-size: 50px; font-weight: bold; cursor: pointer; transition: color 0.2s; }
+  .close-btn:hover { color: #d4af37; }
+</style>
+</head>
+<body>
+
+<audio class="album-music" controls autoplay loop>
+  <source src="backgroudmusic.mp3" type="audio/mpeg">
+</audio>
+
+<div class="album-scene" id="album">
+
+  <!-- Fixed Back Page (No extra photo) -->
+  <div class="page-right">
+    <div class="travel-tag">See Ya!</div>
+    <div class="layout-grid" style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%;">
+      <div class="text-block" style="width: 80%;">
+        <input type="text" class="page-title" value="The End" readonly>
+        <textarea class="scrapbook-text" style="height: 150px;" readonly>Chuyến solo trip hít hà tinh hoa học thuật đến đây là hết. Cháy túi nhưng quá đã! Tạm biệt Boston mộng mơ! ✌️</textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaf 7: MIT seal, Killian Court view / Charles River views -->
+  <div class="leaf" id="leaf7">
+    <div class="face front" onclick="flipLeaf('leaf7', true, event)">
+      <div class="travel-tag">MIT</div>
+      <div class="layout-grid">
+        <div class="top-section">
+          <div class="photo-frame"><img src="20260725_142129.jpg" alt="MIT seal"></div>
+          <div class="text-block">
+            <input type="text" class="page-title" value="Dấu ấn MIT" readonly>
+            <textarea class="scrapbook-text" readonly>Chỗ này sinh ra từ 1861 cơ đấy. Đứng đây hít drama chất xám cho khôn ra xíu!</textarea>
+          </div>
+        </div>
+        <div class="bottom-section">
+          <div class="text-block">
+            <input type="text" class="page-title" value="Killian Court" readonly>
+            <textarea class="scrapbook-text" readonly>Trái tim của MIT, view phóng thẳng ra sông Charles. Sống ảo ở đây thì chấm hết!</textarea>
+          </div>
+          <div class="photo-frame"><img src="20260725_150913.jpg" alt="Killian Court view"></div>
+        </div>
+      </div>
+    </div>
+    <div class="face back" onclick="flipLeaf('leaf7', false, event)">
+      <div class="travel-tag">Charles River</div>
+      <div class="layout-grid">
+        <div class="top-section">
+          <div class="photo-frame"><img src="20260725_143613.jpg" alt="River view"></div>
+          <div class="text-block">
+            <input type="text" class="page-title" value="Bờ sông ngập gió" readonly>
+            <textarea class="scrapbook-text" readonly>Gió thổi tung tóc, view ngắm skyline Boston xịn đét từ bên kia bờ.</textarea>
+          </div>
+        </div>
+        <div class="bottom-section">
+          <div class="text-block">
+            <input type="text" class="page-title" value="Thuyền lượn lờ" readonly>
+            <textarea class="scrapbook-text" readonly>Mấy em thuyền buồm lượn lờ chảnh chọe trên sông Charles dưới nắng đẹp. Cực chill!</textarea>
+          </div>
+          <div class="photo-frame"><img src="20260725_145222.jpg" alt="Sailboats"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaf 6: MIT buildings -->
+  <div class="leaf" id="leaf6">
+    <div class="face front" onclick="flipLeaf('leaf6', true, event)">
+      <div class="travel-tag">MIT Campus</div>
+      <div class="layout-grid">
+        <div class="top-section">
+          <div class="photo-frame"><img src="20260725_153939.jpg" alt="MIT front facade"></div>
+          <div class="text-block">
+            <input type="text" class="page-title" value="Cổng nhà người ta" readonly>
+            <textarea class="scrapbook-text" readonly>Xin chào William Barton Rogers - người đẻ ra cái Viện xịn xò này!</textarea>
+          </div>
+        </div>
+        <div class="bottom-section">
+          <div class="text-block">
+            <input type="text" class="page-title" value="Stata Center" readonly>
+            <textarea class="scrapbook-text" readonly>Tòa nhà uốn éo như người say rượu của chú Frank Gehry. Điệu đà vãi chưởng!</textarea>
+          </div>
+          <div class="photo-frame"><img src="20260725_140547.jpg" alt="Stata Center"></div>
+        </div>
+      </div>
+    </div>
+    <div class="face back" onclick="flipLeaf('leaf6', false, event)">
+      <div class="travel-tag">Great Dome</div>
+      <div class="layout-grid">
+        <div class="top-section">
+          <div class="photo-frame"><img src="20260725_150128.jpg" alt="Great Dome exterior"></div>
+          <div class="text-block">
+            <input type="text" class="page-title" value="Great Dome" readonly>
+            <textarea class="scrapbook-text" readonly>Quả vòm chà bá biểu tượng của MIT (1916). Nghe đồn sinh viên hay đem xe lên nóc?</textarea>
+          </div>
+        </div>
+        <div class="bottom-section">
+          <div class="text-block">
+            <input type="text" class="page-title" value="Barker Library" readonly>
+            <textarea class="scrapbook-text" readonly>Bên trong cái vòm. Không khí học hành căng cực  .</textarea>
+          </div>
+          <div class="photo-frame"><img src="20260725_151611.jpg" alt="Barker Library dome"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaf 5: Chinatown, Beacon Hill / Ice cream, ICA -->
+  <div class="leaf" id="leaf5">
+    <div class="face front" onclick="flipLeaf('leaf5', true, event)">
+      <div class="travel-tag">Downtown</div>
+      <div class="layout-grid">
+        <div class="top-section">
+          <div class="photo-frame"><img src="20260724_222510.jpg" alt="Chinatown"></div>
+          <div class="text-block">
+            <input type="text" class="page-title" value="Phố Tàu" readonly>
+            <textarea class="scrapbook-text" readonly>Cổng chào quen thuộc. Đi qua tự nhiên thấy đói bụng thèm bát phở ghê...</textarea>
+          </div>
+        </div>
+        <div class="bottom-section">
+          <div class="text-block">
+            <input type="text" class="page-title" value="Beacon Hill" readonly>
+            <textarea class="scrapbook-text" readonly>Khu phố cổ gạch đỏ siêu tình củm lúc chạng vạng. Lên đồ check-in nhanh!</textarea>
+          </div>
+          <div class="photo-frame"><img src="20260724_203709.jpg" alt="Beacon Hill"></div>
+        </div>
+      </div>
+    </div>
+    <div class="face back" onclick="flipLeaf('leaf5', false, event)">
+      <div class="travel-tag">Sweet & Art</div>
+      <div class="layout-grid">
+        <div class="top-section">
+          <div class="photo-frame"><img src="20260724_203321.jpg" alt="J.P. Licks"></div>
+          <div class="text-block">
+            <input type="text" class="page-title" value="J.P. Licks" readonly>
+            <textarea class="scrapbook-text" readonly>Tiệm kem tuổi thơ từ 1981. Cắn miếng Cookies & Cream mát lạnh cả cõi lòng.</textarea>
+          </div>
+        </div>
+        <div class="bottom-section">
+          <div class="text-block">
+            <input type="text" class="page-title" value="ICA Boston" readonly>
+            <textarea class="scrapbook-text" readonly>Ngồi ểnh ương ở góc cửa kính to, ngắm nghệ thuật. Ta nói nó deep gì đâu!</textarea>
+          </div>
+          <div class="photo-frame"><img src="20260725_121709.jpg" alt="Museum interior"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaf 4: Seaport / Financial District -->
+  <div class="leaf" id="leaf4">
+    <div class="face front" onclick="flipLeaf('leaf4', true, event)">
+      <div class="travel-tag">Fountain</div>
+      <div class="layout-grid">
+        <div class="top-section">
+          <div class="photo-frame"><img src="20260724_211625.jpg" alt="Custom House"></div>
+          <div class="text-block">
+            <input type="text" class="page-title" value="Custom House" readonly>
+            <textarea class="scrapbook-text" readonly>Tháp đồng hồ lên đèn chói lóa, đài phun nước xập xình đón màn đêm.</textarea>
+          </div>
+        </div>
+        <div class="bottom-section">
+          <div class="text-block">
+            <input type="text" class="page-title" value="Mùi Tiền" readonly>
+            <textarea class="scrapbook-text" readonly>Lạc trôi giữa rừng cao ốc Financial District. Ngửi thấy ráng ráng mùi tiền đâu đây...</textarea>
+          </div>
+          <div class="photo-frame"><img src="20260724_213651.jpg" alt="Downtown alley"></div>
+        </div>
+      </div>
+    </div>
+    <div class="face back" onclick="flipLeaf('leaf4', false, event)">
+      <div class="travel-tag">Seaport</div>
+      <div class="layout-grid">
+        <div class="top-section">
+          <div class="photo-frame"><img src="20260724_214555.jpg" alt="PTC building"></div>
+          <div class="text-block">
+            <input type="text" class="page-title" value="Seaport" readonly>
+            <textarea class="scrapbook-text" readonly>Tòa PTC lóng la lóng lánh. Cứ thấy hiện đại sầm uất là khoái!</textarea>
+          </div>
+        </div>
+        <div class="bottom-section">
+          <div class="text-block">
+            <input type="text" class="page-title" value="Giao thoa" readonly>
+            <textarea class="scrapbook-text" readonly>Bank cổ kính từ 1865 nay về tay Emerson College. Kim cổ hội tụ ngộ ghê!</textarea>
+          </div>
+          <div class="photo-frame"><img src="20260724_221435.jpg" alt="Union Savings Bank Building"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaf 3: Charles River & historic Boston -->
+  <div class="leaf" id="leaf3">
+    <div class="face front" onclick="flipLeaf('leaf3', true, event)">
+      <div class="travel-tag">Charles River</div>
+      <div class="layout-grid">
+        <div class="top-section">
+          <div class="photo-frame"><img src="20260724_200103.jpg" alt="River sunset"></div>
+          <div class="text-block">
+            <input type="text" class="page-title" value="Săn hoàng hôn" readonly>
+            <textarea class="scrapbook-text" readonly>Mặt trời lặn xập xình trên bến tàu.</textarea>
+          </div>
+        </div>
+        <div class="bottom-section">
+          <div class="text-block">
+            <input type="text" class="page-title" value="Thành phố lên đèn" readonly>
+            <textarea class="scrapbook-text" readonly>Đứng từ xa nhìn skyline lấp lánh, trăng lên sương sương lãng mạn phết.</textarea>
+          </div>
+          <div class="photo-frame"><img src="20260724_202044.jpg" alt="River dusk skyline"></div>
+        </div>
+      </div>
+    </div>
+    <div class="face back" onclick="flipLeaf('leaf3', false, event)">
+      <div class="travel-tag">Landmarks</div>
+      <div class="layout-grid">
+        <div class="top-section">
+          <div class="photo-frame"><img src="20260724_204806.jpg" alt="State House"></div>
+          <div class="text-block">
+            <input type="text" class="page-title" value="State House" readonly>
+            <textarea class="scrapbook-text" readonly>Nhà lập pháp bang với quả mái vòm dát vàng chói mù mắt! Chịu chơi thật.</textarea>
+          </div>
+        </div>
+        <div class="bottom-section">
+          <div class="text-block">
+            <input type="text" class="page-title" value="King's Chapel" readonly>
+            <textarea class="scrapbook-text" readonly>Nhà thờ đá siêu cổ (1754). Bước vào tự nhiên rén rén thấy hơi tâm linh chút nhẹ...</textarea>
+          </div>
+          <div class="photo-frame"><img src="20260724_205252.jpg" alt="King's Chapel"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaf 2: Harvard campus -->
+  <div class="leaf" id="leaf2">
+    <div class="face front" onclick="flipLeaf('leaf2', true, event)">
+      <div class="travel-tag">Houghton</div>
+      <div class="layout-grid">
+        <div class="top-section">
+          <div class="photo-frame"><img src="20260725_115103.jpg" alt="Houghton Library"></div>
+          <div class="text-block">
+            <input type="text" class="page-title" value="Houghton" readonly>
+            <textarea class="scrapbook-text" readonly>Chỗ giấu bí kíp (sách & bản thảo hiếm) của Harvard. Nhìn thôi cấm sờ hiện vật nha!</textarea>
+          </div>
+        </div>
+        <!-- Replaced missing photo with the old cover photo -->
+        <div class="bottom-section">
+          <div class="text-block">
+            <input type="text" class="page-title" value="Memorial Hall" readonly>
+            <textarea class="scrapbook-text" readonly> "Đại Sảnh Đường" của Hogwarts phiên bản đời thực</textarea>
+          </div>
+          <div class="photo-frame"><img src="20260725_124927.jpg" alt="Memorial Hall Check-in"></div>
+        </div>
+      </div>
+    </div>
+    <div class="face back" onclick="flipLeaf('leaf2', false, event)">
+      <div class="travel-tag">Yard</div>
+      <div class="layout-grid">
+        <div class="top-section">
+          <div class="photo-frame"><img src="20260725_120109.jpg" alt="Philosophy Hall"></div>
+          <div class="text-block">
+            <input type="text" class="page-title" value="Emerson Hall" readonly>
+            <textarea class="scrapbook-text" readonly>Tòa nhà khoa Triết học. Gạch đỏ mộng mơ đậm chất mọt sách ngầu lòi.</textarea>
+          </div>
+        </div>
+        <div class="bottom-section">
+          <div class="text-block">
+            <input type="text" class="page-title" value="John Harvard" readonly>
+            <textarea class="scrapbook-text" readonly>Tượng hiệu trưởng đầu tiên của trường. Tương truyền rằng xoa mũi giày ổng sẽ qua môn. Xoa vội xoa vội!</textarea>
+          </div>
+          <div class="photo-frame"><img src="20260725_124332.jpg" alt="John Harvard statue"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaf 1: Cover + Memorial Hall / Lehman & Widener -->
+  <div class="leaf" id="leaf1">
+    <div class="face front cover" onclick="flipLeaf('leaf1', true, event)">
+      <div class="spiral-binding"></div>
+      <div class="corner corner-top-right"></div>
+      <div class="corner corner-bottom-right"></div>
+      
+      <!-- Replaced front cover with requested URL -->
+      <div class="cover-photo-slot">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4KJ4nvz17pfy4cVpjv3SNzJDyejjI9DK8FZBrQnAttA&s=10" alt="MIT and Harvard Logo">
+      </div>
+      
+      <h1 class="cover-title">Boston Trip</h1>
+      <input type="text" class="cover-date-input" value="Lạc trôi ở Harvard & MIT" readonly>
+    </div>
+
+    <div class="face back" onclick="flipLeaf('leaf1', false, event)">
+      <div class="travel-tag">Harvard</div>
+      <div class="layout-grid">
+        <div class="top-section">
+          <div class="photo-frame"><img src="20260725_113405.jpg" alt="Lehman Hall"></div>
+          <div class="text-block">
+            <input type="text" class="page-title" value="Lehman Hall" readonly>
+            <textarea class="scrapbook-text" readonly>Sân trường mát rượi rợp bóng cây. Nắng vỡ đầu chui vào đây trốn là chuẩn bài.</textarea>
+          </div>
+        </div>
+        <div class="bottom-section">
+          <div class="text-block">
+            <input type="text" class="page-title" value="Widener" readonly>
+            <textarea class="scrapbook-text" readonly>Thư viện to vật vã của Harvard. Đứng ngoài hít ké tí mùi chữ cho nó khôn ra.</textarea>
+          </div>
+          <div class="photo-frame"><img src="20260725_114211.jpg" alt="Widener Library"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="imageModal" class="modal" onclick="closeModal()">
+  <span class="close-btn">&times;</span>
+  <img class="modal-content" id="modalImg">
+</div>
+
+<script>
+  let currentZ = 20;
+  document.addEventListener('DOMContentLoaded', () => {
+    const music = document.querySelector('.album-music');
+    if (music) {
+      music.volume = 0.4;
+      music.play().catch(() => {
+        const start = () => { music.play(); document.removeEventListener('click', start); document.removeEventListener('keydown', start); };
+        document.addEventListener('click', start);
+        document.addEventListener('keydown', start);
+      });
+    }
+  });
+  function flipLeaf(leafId, forward, event) {
+    if (event) {
+      if (event.target.closest('.photo-frame') || event.target.closest('.text-block') || event.target.closest('.cover-photo-slot') || ['input','textarea','img'].includes(event.target.tagName.toLowerCase())) return;
+      event.stopPropagation();
+    }
+    const music = document.querySelector('.album-music');
+    if (music && music.paused) { music.volume = 0.4; music.play().catch(()=>{}); }
+    const leaf = document.getElementById(leafId);
+    currentZ++;
+    leaf.style.zIndex = currentZ;
+    if (forward) leaf.classList.add('flipped'); else leaf.classList.remove('flipped');
+  }
+  document.querySelectorAll('.photo-frame img, .cover-photo-slot img').forEach(img => {
+    img.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const modal = document.getElementById('imageModal');
+      document.getElementById('modalImg').src = this.src;
+      modal.classList.add('active');
+    });
+  });
+  function closeModal() { document.getElementById('imageModal').classList.remove('active'); }
+</script>
+
+</body>
+</html>
