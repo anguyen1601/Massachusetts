@@ -164,15 +164,18 @@
       <!-- Interactive Message Box (Left Side) -->
       <textarea class="message-area" placeholder="Write your personal message here..."> – Cambridge, Massachusets - 25/07/2026
 
-Điểm dừng chân ngày thứ ba của chuyến đi là tiểu bang Massachusets, với ba địa điểm là Đại học Harvard, MIT và thành phố Boston.
+Điểm dừng chân cho ngày thứ ba của chuyến đi là tiểu bang Massachusets, với ba địa điểm là Đại học Harvard, MIT và thành phố Boston.
 
-Thành phố Cambridge là nơi tọa lạc của hai trường đại học top đầu thế giới - Harvard và MIT. Dù cả hai trường cách nhau một điểm dừng xe buýt (1.4 miles),
-nhưng cả hai ngôi trường này lại theo xu hướng khác nhau hoàn toàn. Nếu Harvard mang đến cho học sinh nét cổ kính, kiến trúc 
+Thành phố Cambridge là nơi tọa lạc của hai trường đại học top đầu thế giới - Harvard và MIT. Dù cả hai trường cách nhau một điểm dừng xe buýt (1.4 miles), nhưng cả hai ngôi trường này lại theo xu hướng khác nhau hoàn toàn.
 
-</textarea>
+Nếu Harvard mang đến nét cổ kính với gạch đỏ mộng mơ đậm chất mọt sách (như tòa Emerson Hall hay thư viện Widener), thì MIT lại theo hệ cá tính, hiện đại với tòa Stata Center uốn éo điệu đà và quả vòm Great Dome nổi bật. Giống như "đối thủ truyền kiếp" - Yale, sinh viên trong trường hay đụng mũi giày tượng John Harvard mong được qua môn. Xong xuôi lại tạt qua Killian Court bên MIT ngắm thuyền buồm lượn lờ trên sông Charles. Ta nói view ở đây cực chill, sống ảo thì chấm hết!
+
+Rời hai cái "lò luyện chất xám", anh dạo trung tâm Boston vào lúc hoàng hôn. Đứng ngắm skyline lấp lánh, trăng lên sương sương lãng mạn phết em nè ! Thành phố này đúng kiểu kim cổ hội tụ ngộ ghê. Nếu khu Beacon Hill gạch đỏ siêu tình củm, thì rừng cao ốc bên Seaport và Financial District. Dừng chân nhanh tại Phố Tàu; sau đó ăn tối với kem Cookies & Cream mát lạnh ở J.P. Licks. 
+
+Tạm biệt Boston mộng mơ! ✌️</textarea>
 
       <!-- Clickable Circular Stamp Overlay (Top Right) -->
-      <a class="stamp-link" href="https://anguyen1601.github.io/Massachusets/album.html" target="_blank" title="Click to view album/video"></a>
+      <a class="stamp-link" href="https://anguyen1601.github.io/Massachusetts/album.html" target="_blank" title="Click to view album/video"></a>
       
       <!-- Interactive Address Lines Overlay (Right Side - 5 Lines) -->
       <div class="address-container">
@@ -211,7 +214,7 @@ nhưng cả hai ngôi trường này lại theo xu hướng khác nhau hoàn to�
     const addressInputs = document.querySelectorAll('.address-input');
 
     // Restore saved text (supports saving blank values safely)
-    const savedMessage = localStorage.getItem('harvard_postcard_message');
+    const savedMessage = localStorage.getItem('harvard_postcard_message_2');
     if (savedMessage !== null) {
       messageArea.value = savedMessage;
     }
@@ -225,7 +228,7 @@ nhưng cả hai ngôi trường này lại theo xu hướng khác nhau hoàn to�
 
     // Save changes automatically on input
     messageArea.addEventListener('input', () => {
-      localStorage.setItem('harvard_postcard_message', messageArea.value);
+      localStorage.setItem('harvard_postcard_message_2', messageArea.value);
     });
 
     addressInputs.forEach((input, index) => {
